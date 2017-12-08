@@ -1,0 +1,160 @@
+<!-- Load the Polymer.Element base class -->
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+
+<dom-module id="personnes-list">
+    <!-- Defines the element's style and local DOM -->
+    <template>
+        <style>
+            :host {
+                display: block;
+                padding: 16px;
+            }
+
+            paper-button.blue {
+                background-color: var(--paper-blue-800);
+                color: white;
+                height: 100px;
+                max-height: 100px;
+                width: 400px;
+                margin: 10px;
+                max-width: 400px;
+                font-size: 20px;
+                text-align: center;
+            }
+            
+            .mycalss , h1{
+                width: 100%;
+                text-align: center;
+            }
+            table{
+                width: 30%;
+                text-align: center;
+                margin: auto;
+                
+            }
+        </style>
+
+     <template is="dom-if" if="[[!bttonClick]]">
+        <template is="dom-repeat" items="{{pageArray}}" as="nbrPage">
+            <iron-ajax auto url="https://swapi.co/api/people?page={{nbrPage}}" handle-as="json" on-response="getPeopleList">
+            </iron-ajax>
+        </template>
+    </template>
+
+   
+        <template is="dom-if" if="[[bttonClick]]">
+                
+                      <iron-ajax auto url="https://swapi.co/api/people/?search={{text}}"  handle-as="json" on-response="research">
+                      </iron-ajax>
+         </template>
+
+
+        <table  >
+                <tr>
+               <td >
+                       <paper-input always-float-label label="Recherche Person"  value="{{text}}"></paper-input>
+                </td>
+                <td>
+                       <paper-button toggles raised  on-click="recherche">
+                               rechercher
+                               </paper-button>
+                   
+                   </td>
+                   <td>
+                           <paper-button toggles raised  on-click="annuler">
+                                   annuler
+                                   </paper-button>
+                       
+                       </td>
+               </tr>
+           </table>
+
+
+        <h1>La liste des personnes</h1>
+
+        <div class="mycalss">
+        <template is="dom-repeat" items="{{listPeople}}" as="person">
+            <paper-button toggles raised class="blue" on-click="afficherDetailPersonne"><strong>[[person.name]]</strong>
+            </paper-button>
+            <br>
+            <br>
+        </template>
+    </div>
+    </template>
+    <script>
+        // Your new element extends the Polymer.Element base class
+        class Personnes extends Polymer.Element {
+            static get is() { return 'personnes-list'; }
+
+
+            constructor() {
+                super();
+                this.listPeople = [];
+                this.text = "";
+                this.bttonClick=false;
+                this.pageArray = [];
+
+                for (let i = 1; i <= 9; i++)
+                    this.pageArray.push(i);
+
+            }
+
+            getPeopleList(res) {
+              
+                res.detail.response.results.forEach(function (element) {
+                    this.listPeople.push(element);
+                }, this);
+                console.log(this.listPeople);
+                    this.set('listPeople', this.listPeople.slice());
+
+            }
+
+            afficherDetailPersonne(oEvent) {
+                let person = oEvent.model.get('person');
+                let temp = person.url.substr(person.url.lastIndexOf('people/') + 7);
+                let id = temp.substr(0, temp.length - 1);
+                console.log(id);
+                window.history.pushState({}, null, '/person/' + id);
+                window.dispatchEvent(new CustomEvent('location-changed'));
+            }
+
+       
+
+            recherche (res)
+            {
+                 if (this.text != "")
+                 {
+                    this.bttonClick=true;
+                    
+                 }
+            }
+            annuler (res)
+            {
+                 if (this.text != "")
+                 {
+                   
+                    this.text="";                   
+                 }
+                 this.bttonClick=true;
+            }
+
+            research(res)
+            {
+                this.listPeople = [];
+                res.detail.response.results.forEach(function (element) {
+                    this.listPeople.push(element);
+                    console.log(element);
+                }, this);
+                this.set('listPeople', this.listPeople.slice());
+                this.bttonClick=false;
+
+            }
+
+        }
+        //Now, register your new custom element so the browser can use it
+        customElements.define(Personnes.is, Personnes);
+    </script>
+</dom-module>

@@ -1,0 +1,179 @@
+<!-- Load the Polymer.Element base class -->
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<dom-module id="film-details">
+    <!-- Defines the element's style and local DOM -->
+    <template>
+        <style>
+             :host {
+                display: block;
+                padding: 16px;
+            }
+
+            paper-button.blue {
+                background-color: var(--paper-blue-800);
+                color: white;
+                height: 100px;
+                max-height: 100px;
+                width: 400px;
+                margin: 10px;
+                max-width: 400px;
+                font-size: 20px;
+                text-align: center;
+            }
+            
+            .Mycalss , h1, table,h2{
+                width: 100%;
+                text-align: center;
+                font-size: 25px;
+            }
+
+            td{
+                font-weight: blod;
+                font-size: 25px;
+            }
+        </style>
+
+        <iron-ajax auto url="https://swapi.co/api/films/{{selectedid}}" handle-as="json" on-response="FilmData">
+        </iron-ajax>
+
+         <template is="dom-if" if="[[isPersonShowed]]">
+            <template is="dom-repeat" items="{{IdPersonne}}" as="idPersonne">
+                <iron-ajax auto url="https://swapi.co/api/people/{{idPersonne}}" handle-as="json" on-response="getPersonneList">
+                </iron-ajax>
+            </template>
+            <template is="dom-repeat" items="{{IdStarship}}" as="idStraship">
+                    <iron-ajax auto url="https://swapi.co/api/starships/{{idStraship}}" handle-as="json" on-response="getStarshipList">
+                    </iron-ajax>
+                </template>
+        </template>
+
+
+        <h1>Details du film  : {{Film.title}}</h1>
+        <br>
+            <table border="1">
+                <tr>
+                    <td><strong>Nombre d'episodes </strong></td>
+                    <td><strong>directeur</strong></td>
+                    <td><strong>producteur  </strong></td>
+                    <td><strong>Date de realisation </strong></td>
+                </tr>
+                <tr>
+                    <td>{{Film.episode_id }}</td>
+                    <td> {{Film.director  }}</td>
+                    <td>{{ Film.producer }}</td>
+                    <td>{{Film.release_date}}</td>
+                </tr>
+            </table>
+        
+
+            <div class="Mycalss">
+            <h2>la liste des personnes : </h2>
+            <template is="dom-repeat" items="{{Personnes}}" as="personne">
+                <p>
+                    <paper-button toggles raised class="blue" on-click="afficherDetailPersonne">
+                    <strong>{{personne.name}}</strong>
+                </paper-button>
+                </p>
+            </template>
+
+            <h2>La liste des starships :  </h2>
+            <template is="dom-repeat" items="{{Starship}}" as="starship">
+                    <p>
+                        <paper-button toggles raised class="blue" on-click="afficherDetailStarship">
+                        <strong>{{starship.name}}</strong>
+                    </paper-button>
+                    </p>
+                </template>
+        </div>
+    </template>
+    <script>
+        
+        class MyFilm extends Polymer.Element {
+            static get is() { return 'film-details'; }
+
+            constructor() {
+                super();
+                this.isPersonShowed = false;
+        
+                this.UrlPersonnes = [];
+                this.IdPersonne = [];
+                this.Personnes = [];
+
+
+                this.Starship = [];
+                this.IdStarship= [];
+                this.UrlStarship= [];
+
+               
+            }
+
+
+            FilmData(res) {
+                this.Film = res.detail.response;
+                this.UrlPersonnes = res.detail.response.characters;
+                this.UrlPersonnes.forEach(function (element) {
+                    let temp = element.substr(element.lastIndexOf('people/') + 7);
+                    let id = temp.substr(0, temp.length - 1);
+                    console.log(id);
+                    this.IdPersonne.push(id);
+                }, this);
+
+                this.set('IdPersonne', this.IdPersonne.slice());
+
+                this.Personnes = [];
+
+                this.UrlStarship = res.detail.response.starships;
+                this.UrlStarship.forEach(function (element) {
+                    let temp = element.substr(element.lastIndexOf('starships/') + 10);
+                    let id = temp.substr(0, temp.length - 1);
+                    this.IdStarship.push(id);
+                }, this);
+
+                this.set('IdStarship', this.IdStarship.slice());
+
+                this.Starship = [];
+                this.isPersonShowed = true;
+            }
+
+            getPersonneList(res) {
+               
+                let personne = res.detail.response;
+                this.Personnes.push(personne);
+
+                    this.set('Personnes', this.Personnes.slice());
+                    console.log(this.Personnes);
+            }
+
+            
+            getStarshipList(res) {
+                this.cpt++;
+                let starship = res.detail.response;
+                this.Starship.push(starship);
+               
+                this.set('Starship', this.Starship.slice());
+                    console.log(this.Starship);
+
+            }
+            
+              afficherDetailStarship(oEvent) {
+                let starship = oEvent.model.get('starship');
+                let temp = starship.url.substr(starship.url.lastIndexOf('starships/') + 10);
+                let id = temp.substr(0, temp.length - 1);
+                console.log(id);
+                window.history.pushState({}, null, '/starship/' + id);
+                window.dispatchEvent(new CustomEvent('location-changed'));
+            }
+            afficherDetailPersonne(oEvent) {
+                let film = oEvent.model.get('personne');
+                let temp = film.url.substr(film.url.lastIndexOf('people/') + 7);
+                let id = temp.substr(0, temp.length - 1);
+                console.log(id);
+                window.history.pushState({}, null, '/person/' + id);
+                window.dispatchEvent(new CustomEvent('location-changed'));
+            }
+        }
+        //Now, register your new custom element so the browser can use it
+        customElements.define(MyFilm.is, MyFilm);
+    </script>
+</dom-module>
